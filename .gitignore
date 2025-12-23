@@ -1,0 +1,30 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Data & Artifacts
+# =========================
+creditcard.csv
+*.pkl
+artifacts/
+models/
+
+# =========================
+# Environment & OS
+# =========================
+.env
+.venv/
+venv/
+.env/
+.DS_Store
+Thumbs.db
