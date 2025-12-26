@@ -30,16 +30,14 @@ traditional accuracy-based evaluation misleading.
 
 ```text
 fraud-detection-ml/
+├── data/       (local only, excluded from version control)
+│
 ├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_modeling.ipynb
 │   ├── 04_evaluation.ipynb
 │   └── 05_model_comparison.ipynb
-│
-├── artifacts/
-│
-├── models/
 │
 ├── images/
 │   └── pr_curve_comparison.png
