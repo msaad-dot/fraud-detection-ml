@@ -1,14 +1,13 @@
 # 💳 Fraud Detection — Machine Learning Pipeline
 
-## 📌 Problem Overview
-This project addresses a **highly imbalanced credit card fraud detection** problem,
-where the objective is to identify fraudulent transactions while minimizing false
-alerts that negatively impact customer experience.
+## 📌 Project Overview
+This project tackles a **highly imbalanced credit card fraud detection** problem,
+where the goal is to maximize fraud detection while controlling false positive alerts
+that negatively impact customer experience.
 
-Fraud detection is a **cost-sensitive classification problem**, where false negatives
-(missed fraud) typically incur higher cost than false positives.
+Fraud detection is treated as a **cost-sensitive classification problem**, where
+false negatives (missed fraud) typically incur higher cost than false positives.
 
----
 
 ## 📊 Dataset
 The dataset contains anonymized credit card transactions:
@@ -18,28 +17,35 @@ The dataset contains anonymized credit card transactions:
   - `0` → Normal transaction  
   - `1` → Fraudulent transaction  
 
-Fraud cases represent approximately **0.17%** of the dataset.
-
----
+Fraud cases represent approximately **0.17%** of the dataset, making
+traditional accuracy-based evaluation misleading.
 
 ## 🗂️ Project Structure
+> Trained models and preprocessing artifacts are persisted locally for
+> reproducibility but are excluded from version control.
 
+```text
 fraud-detection-ml/
 ├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_modeling.ipynb
-│   └── 04_evaluation.ipynb
+│   ├── 04_evaluation.ipynb
+│   └── 05_model_comparison.ipynb
+│
+├── artifacts/
+│
+├── models/
+│
 ├── images/
-│   ├── pr_curve.png
-│   ├── roc_curve.png
-│   └── confusion_matrix.png
+│   └── pr_curve_comparison.png
+│
 ├── requirements.txt
-├── .gitignore
 └── README.md
-
+```
 ## 🔁 Machine Learning Pipeline
 
+```text
 Raw Dataset (creditcard.csv)
         ↓
 01_eda — Exploratory Data Analysis
@@ -51,46 +57,66 @@ Raw Dataset (creditcard.csv)
         ↓
 03_modeling
   • Logistic Regression (baseline)
-  • Probability predictions
         ↓
 04_evaluation
-  • ROC-AUC & PR-AUC
+  • PR-AUC / ROC-AUC
   • Threshold tuning
-  • Business-aware evaluation
+        ↓
+05_model_comparison
+  • Logistic Regression
+  • Random Forest
+  • XGBoost
+  • Business-aware model selection
+```
 
-## ⚙️ Key Modeling Decisions
+## ⚙️ Modeling Strategy
 - Severe class imbalance handled using **class-weighted training**
-- **Probability-based metrics** prioritized over accuracy
-- **Threshold tuning** aligned with business risk trade-offs
-- Preprocessing and modeling stages are **fully decoupled**
+- **PR-AUC** prioritized over accuracy due to extreme imbalance
+- **Probability-based evaluation** used instead of hard predictions
+- **Threshold tuning** aligned with operational and business risk
+- Preprocessing, modeling, and evaluation are fully **decoupled**
   to resemble real-world ML pipelines
-
-## 📈 Results Summary
-- **ROC-AUC ≈ 0.97**
-- High recall for fraudulent transactions
-- False positives significantly reduced via threshold tuning
-
-## 📊 Evaluation Visuals
-
-### Precision–Recall Curve
-![Precision–Recall Curve](images/pr_curve.png)
-
-### ROC Curve
-![ROC Curve](images/roc_curve.png)
-
-### Final Confusion Matrix (Threshold = 0.7)
-![Confusion Matrix](images/confusion_matrix.png)
+- Different probability distributions across models required
+  **model-specific threshold selection**
 
 
-## 🚀 Next Steps
-- Compare baseline with tree-based models (Random Forest, XGBoost, LightGBM)
-- Add explicit cost-based evaluation
-- Deploy the model using a REST API (FastAPI)
 
 
-## 🛠️ Requirements
+## 📊 Final Model Comparison
 
-    pip install -r requirements.txt
+| Model | PR-AUC | Threshold | Precision | Recall | False Positives |
+|------|--------|-----------|-----------|--------|-----------------|
+| Logistic Regression | 0.716 | 0.70 | 0.12 | 0.91 | 644 |
+| Random Forest | 0.854 | 0.35 | 0.94 | 0.81 | 5 |
+| **XGBoost** | **0.861** | **0.50** | **0.67** | **0.86** | **41** |
+
+
+## ✅ Final Model Selection
+- Logistic Regression achieved high fraud recall but generated an excessive
+  number of false positive alerts.
+- Random Forest minimized false positives but missed a larger portion of fraud.
+- **XGBoost achieved the best overall balance**, combining:
+  - Highest ranking performance (PR-AUC)
+  - Strong fraud recall
+  - Substantial reduction in false positives
+
+➡️ **XGBoost was selected as the preferred production candidate under a
+moderate risk tolerance setting.**
+
+> **Key takeaway:** Model selection in fraud detection is driven by business
+> trade-offs rather than metric maximization.
+
+## 📈 Precision–Recall Curve Comparison
+![Precision–Recall Curve](images/pr_curve_comparison.png)
+
+
+## 🛠️ Tech Stack
+- Python
+- scikit-learn
+- XGBoost
+- NumPy / Pandas
+- Matplotlib
+
 
 ## 👤 Author
 **Mohamed Saad**
