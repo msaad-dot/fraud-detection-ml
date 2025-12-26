@@ -20,11 +20,16 @@ artifacts/
 models/
 
 # =========================
+# Images
+# =========================
+images/*
+!images/pr_curve_comparison.png
+
+# =========================
 # Environment & OS
 # =========================
 .env
 .venv/
 venv/
-.env/
 .DS_Store
 Thumbs.db
