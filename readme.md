@@ -20,6 +20,10 @@ The dataset contains anonymized credit card transactions:
 Fraud cases represent approximately **0.17%** of the dataset, making
 traditional accuracy-based evaluation misleading.
 
+> The dataset is excluded from version control and should be placed locally under the `data/` directory.
+
+> Dataset source: Kaggle — Credit Card Fraud Dataset.
+
 ## 🗂️ Project Structure
 > Trained models and preprocessing artifacts are persisted locally for
 > reproducibility but are excluded from version control.
