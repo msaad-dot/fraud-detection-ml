@@ -42,6 +42,7 @@ fraud-detection-ml/
 │   ├── 04_evaluation.ipynb
 │   ├── 05_model_comparison.ipynb
 │   └── 06_cost_evaluation.ipynb
+│   └── 07_inference.ipynb
 │
 ├── images/
 │   └── pr_curve_comparison.png
@@ -83,6 +84,11 @@ Raw Dataset (creditcard.csv)
   • Expected financial loss analysis
   • Cost-based threshold optimization
   • Final model selection
+07_inference
+    ↓
+  • Production-ready inference
+  • Config-driven thresholding
+  • API-ready design
 ```
 
 ---
@@ -127,6 +133,35 @@ expected business impact, not metric maximization alone.**
 is defined by business trade-offs rather than accuracy or recall in isolation.
 
 ---
+
+## 🔌 Inference & Deployment Design
+
+The project includes a standalone, production-oriented inference module
+(`inference_07.py`) that demonstrates how the trained fraud detection model
+would be used in a real-world system.
+
+### Key Design Decisions
+- Inference logic is fully separated from training and evaluation code
+- Trained model and preprocessing artifacts are loaded explicitly
+- Feature schema and ordering are strictly enforced to match training-time inputs
+- Missing features are handled defensively to ensure robust inference behavior
+- Decision threshold is externalized via a model configuration file
+- Business decision logic is decoupled from model code
+
+### 🛡️ Config-Driven Decision Logic
+The fraud decision threshold is not hard-coded.
+Instead, it is loaded from an external configuration file (`model_config.json`)
+that represents business risk tolerance and cost considerations.
+
+This allows decision policies to be updated safely without modifying inference code.
+
+### API Readiness
+The inference module is intentionally implemented as pure Python functions,
+making it easy to wrap with an API layer (e.g., FastAPI or Flask) without
+changing core business logic.
+
+This design reflects common production patterns used in deployed ML systems.
+
 
 ## 📈 Precision–Recall Curve Comparison
 ![Precision–Recall Curve](images/pr_curve_comparison.png)
