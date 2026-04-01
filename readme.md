@@ -1,181 +1,113 @@
-# 💳 Fraud Detection — Machine Learning Pipeline
+# Fraud Detection — End-to-End ML Pipeline
 
-## 📌 Project Overview
-This project tackles a **highly imbalanced credit card fraud detection** problem,
-where the goal is to maximize fraud detection while controlling false positive alerts
-that negatively impact customer experience.
+![Python](https://img.shields.io/badge/Python-3.14-blue) ![XGBoost](https://img.shields.io/badge/Model-XGBoost-orange) ![MLflow](https://img.shields.io/badge/Tracking-MLflow-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
-Fraud detection is treated as a **cost-sensitive classification problem**, where
-false negatives (missed fraud) typically incur significantly higher cost than
-false positives.
+A production-oriented machine learning pipeline for credit card fraud detection on a highly imbalanced dataset (~0.17% fraud rate). The goal is to maximize fraud recall while controlling false positive alerts — evaluated using business cost analysis, not just accuracy.
 
 ---
 
-## 📊 Dataset
-The dataset contains anonymized credit card transactions:
-- Features **V1–V28** are **PCA-transformed**
-- **Time** and **Amount** represent transaction time and value
-- Target variable **Class**:
-  - `0` → Normal transaction  
-  - `1` → Fraudulent transaction  
+## Pipeline
 
-Fraud cases represent approximately **0.17%** of the dataset, making
-traditional accuracy-based evaluation misleading.
-
-> The dataset is excluded from version control and should be placed locally under the `data/` directory.  
-> Dataset source: Kaggle — Credit Card Fraud Dataset.
+![ML Pipeline](assets/fraud_detection_ml_pipeline.png)
 
 ---
 
-## 🗂️ Project Structure
-> Trained models and preprocessing artifacts are persisted locally for
-> reproducibility but are excluded from version control.
+## Results
 
-```text
+| Model | PR-AUC | ROC-AUC | Threshold | Recall | False Positives |
+|-------|--------|---------|-----------|--------|-----------------|
+| Logistic Regression | 0.716 | 0.972 | 0.70 | 0.91 | 644 |
+| Random Forest | 0.854 | 0.953 | 0.35 | 0.81 | 5 |
+| **XGBoost** | **0.861** | **0.984** | **0.35** | **0.86** | **41** |
+
+XGBoost was selected as the final model based on expected financial loss analysis, not metric maximization alone.
+
+---
+
+## Precision–Recall Curve Comparison
+
+![PR Curve](assets/pr_curve_comparison.png)
+
+XGBoost and Random Forest significantly outperform Logistic Regression on the fraud class. XGBoost achieves the best overall PR-AUC while maintaining stronger recall at higher precision thresholds.
+
+---
+
+## Experiment Tracking (MLflow)
+
+All training runs logged with MLflow — parameters, metrics, and model artifacts tracked across all 3 models.
+
+![MLflow Comparison](assets/mlflow_comparison.png)
+
+---
+
+## Key Engineering Decisions
+
+**Class imbalance** — handled via class-weighted training, not resampling, to preserve the original data distribution and avoid synthetic sample artifacts.
+
+**Evaluation metric** — PR-AUC prioritized over accuracy. With a 0.17% fraud rate, accuracy is misleading — a model predicting all transactions as normal achieves 99.8% accuracy while detecting zero fraud.
+
+**Threshold tuning** — each model has its own operating threshold selected by balancing precision, recall, and business cost. Defaulting to 0.5 is inappropriate for imbalanced problems.
+
+**Cost-based selection** — models compared by expected financial loss: false negatives (missed fraud) carry a cost of $500, false positives (false alerts) carry a cost of $5. XGBoost achieved the lowest total expected loss across all evaluated thresholds.
+
+**Decoupled pipeline** — preprocessing, modeling, and evaluation are fully separated. Each notebook saves and loads artifacts explicitly, matching real production ML patterns where stages run independently.
+
+**Config-driven inference** — the decision threshold is externalized to `model_config.json`. Business risk tolerance can be adjusted without modifying inference code, enabling safer policy updates.
+
+---
+
+## Project Structure
+
+```
 fraud-detection-ml/
-├── data/       (local only, excluded from version control)
-│
+├── data/                    (local only — excluded from version control)
 ├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_modeling.ipynb
 │   ├── 04_evaluation.ipynb
 │   ├── 05_model_comparison.ipynb
-│   └── 06_cost_evaluation.ipynb
+│   ├── 06_cost_evaluation.ipynb
 │   └── 07_inference.ipynb
-│
-├── images/
-│   └── pr_curve_comparison.png
-│
+├── models/                  (local only — excluded from version control)
+├── artifacts/               (local only — excluded from version control)
+├── assets/
+│   ├── fraud_detection_ml_pipeline.png
+│   ├── pr_curve_comparison.png
+│   └── mlflow_comparison.png
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## 🔁 Machine Learning Pipeline
+## Inference Module
 
-```text
-Raw Dataset (creditcard.csv)
-        ↓
-01_eda — Exploratory Data Analysis
-        ↓
-02_preprocessing
-  • Stratified train/test split
-  • Feature scaling (Time, Amount)
-  • Numeric type enforcement
-  • Artifact persistence
-        ↓
-03_modeling
-  • Logistic Regression (baseline)
-  • Random Forest
-  • XGBoost
-        ↓
-04_evaluation
-  • PR-AUC / ROC-AUC
-  • Precision–Recall analysis
-  • Baseline threshold selection
-        ↓
-05_model_comparison
-  • Cross-model comparison
-  • Model-specific threshold tuning
-        ↓
-06_cost_evaluation
-  • Expected financial loss analysis
-  • Cost-based threshold optimization
-  • Final model selection
-07_inference
-    ↓
-  • Production-ready inference
-  • Config-driven thresholding
-  • API-ready design
-```
+The inference module (`07_inference.ipynb`) demonstrates how the trained model would operate in a real production system:
+
+- Loads trained model and scaler from persisted artifacts
+- Enforces strict feature schema matching training-time inputs
+- Handles missing features defensively with zero-fill defaults
+- Loads decision threshold from external config file — not hard-coded
+- Implemented as pure Python functions, ready to wrap with FastAPI or Flask without changing core business logic
 
 ---
 
-## ⚙️ Modeling Strategy
-- Severe class imbalance handled using **class-weighted training**
-- **PR-AUC** prioritized over accuracy due to extreme imbalance
-- **Probability-based evaluation** used instead of hard predictions
-- **Threshold tuning** aligned with operational and business risk
-- Preprocessing, modeling, and evaluation are fully **decoupled**
-  to resemble real-world ML pipelines
-- Different probability distributions across models required
-  **model-specific threshold selection**
+## Dataset
+
+Anonymized credit card transactions. Features V1–V28 are PCA-transformed by the dataset provider. Time and Amount are the only raw features and are scaled during preprocessing.
+
+> Source: [Kaggle — Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+> Place `creditcard.csv` under `data/` locally.
 
 ---
 
-## 📊 Final Model Comparison
+## Tech Stack
 
-| Model | PR-AUC | Threshold | Precision | Recall | False Positives |
-|------|--------|-----------|-----------|--------|-----------------|
-| Logistic Regression | 0.716 | 0.70 | 0.12 | 0.91 | 644 |
-| Random Forest | 0.854 | 0.35 | 0.94 | 0.81 | 5 |
-| **XGBoost** | **0.861** | **0.50** | **0.67** | **0.86** | **41** |
+Python · XGBoost · Scikit-learn · MLflow · Pandas · NumPy · Matplotlib
 
 ---
 
-## 💰 Cost-Based Model Selection
-Beyond statistical performance, models were evaluated using a
-**business-oriented cost framework**, where:
+## Author
 
-- False negatives represent missed fraud losses
-- False positives represent operational and customer experience costs
-
-A cost-sensitive threshold analysis demonstrated that **XGBoost**
-achieves the **lowest expected financial loss** while maintaining
-strong fraud recall and manageable alert volume.
-
-➡️ **XGBoost was selected as the final production candidate based on
-expected business impact, not metric maximization alone.**
-
-> **Key takeaway:** In real-world fraud detection systems, the optimal model
-is defined by business trade-offs rather than accuracy or recall in isolation.
-
----
-
-## 🔌 Inference & Deployment Design
-
-The project includes a standalone, production-oriented inference module
-(`inference_07.py`) that demonstrates how the trained fraud detection model
-would be used in a real-world system.
-
-### Key Design Decisions
-- Inference logic is fully separated from training and evaluation code
-- Trained model and preprocessing artifacts are loaded explicitly
-- Feature schema and ordering are strictly enforced to match training-time inputs
-- Missing features are handled defensively to ensure robust inference behavior
-- Decision threshold is externalized via a model configuration file
-- Business decision logic is decoupled from model code
-
-### 🛡️ Config-Driven Decision Logic
-The fraud decision threshold is not hard-coded.
-Instead, it is loaded from an external configuration file (`model_config.json`)
-that represents business risk tolerance and cost considerations.
-
-This allows decision policies to be updated safely without modifying inference code.
-
-### API Readiness
-The inference module is intentionally implemented as pure Python functions,
-making it easy to wrap with an API layer (e.g., FastAPI or Flask) without
-changing core business logic.
-
-This design reflects common production patterns used in deployed ML systems.
-
-
-## 📈 Precision–Recall Curve Comparison
-![Precision–Recall Curve](images/pr_curve_comparison.png)
-
----
-
-## 🛠️ Tech Stack
-- Python
-- scikit-learn
-- XGBoost
-- NumPy / Pandas
-- Matplotlib
-
----
-
-## 👤 Author
-**Mohamed Saad**
+**Mohamed Saad** — [GitHub](https://github.com/msaad-dot) · [LinkedIn](https://www.linkedin.com/in/muhammed-saad74/)
