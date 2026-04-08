@@ -108,6 +108,13 @@ Python · XGBoost · Scikit-learn · MLflow · Pandas · NumPy · Matplotlib
 
 ---
 
+## Related Projects
+
+- [fraud-detection-api](https://github.com/msaad-dot/fraud-detection-api) — FastAPI inference service
+- [drift-monitoring](https://github.com/msaad-dot/drift-monitoring) — Data drift monitoring
+
+---
+
 ## Author
 
-**Mohamed Saad** — [GitHub](https://github.com/msaad-dot) · [LinkedIn](https://www.linkedin.com/in/muhammed-saad74/)
+Mohamed Saad — [GitHub](https://github.com/msaad-dot)
